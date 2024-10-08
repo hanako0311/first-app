@@ -6,7 +6,7 @@ import com.google.firebase.FirebaseOptions;
 import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PostConstruct;
-import java.io.FileInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -15,11 +15,16 @@ public class FirebaseConfig {
 
     @PostConstruct
     public void init() {
-        try (InputStream serviceAccount = getClass().getClassLoader().getResourceAsStream("findnest-capstone-firebase-adminsdk-nho4t-dcbd781d19.json")) {
+        try {
+            // Get Firebase credentials from the environment variable
+            String firebaseConfig = System.getenv("GOOGLE_CREDENTIALS");
 
-            if (serviceAccount == null) {
-                throw new IOException("Service account key file not found.");
+            if (firebaseConfig == null) {
+                throw new IOException("GOOGLE_CREDENTIALS environment variable is not set.");
             }
+
+            // Convert the environment variable string into an InputStream
+            InputStream serviceAccount = new ByteArrayInputStream(firebaseConfig.getBytes());
 
             // Firebase options
             FirebaseOptions options = new FirebaseOptions.Builder()
