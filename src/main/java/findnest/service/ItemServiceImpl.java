@@ -1,6 +1,5 @@
 package findnest.service;
 
-import com.google.api.core.ApiFuture;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -14,7 +13,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
 import java.util.Map;
 
 @Service
@@ -280,6 +278,7 @@ public class ItemServiceImpl implements ItemService {
                 if (snapshot.exists()) {
                     Items item = snapshot.getValue(Items.class);
                     if (item != null) {
+
                         // Update turnover fields if present in updates
                         if (updates.containsKey("turnoverDate")) {
                             item.setTurnoverDate((String) updates.get("turnoverDate"));
@@ -287,49 +286,35 @@ public class ItemServiceImpl implements ItemService {
                         if (updates.containsKey("turnoverPerson")) {
                             item.setTurnoverPerson((String) updates.get("turnoverPerson"));
                         }
-    
-                        // Update claimant fields
+
+                        // Update other fields
                         if (updates.containsKey("claimantName")) {
                             item.setClaimantName((String) updates.get("claimantName"));
                         }
                         if (updates.containsKey("claimantImage")) {
                             item.setClaimantImage((String) updates.get("claimantImage"));
                         }
-    
-                        // Ensure status is updated to "Claimed" if claimant info is provided
-                        if (item.getClaimantName() != null && !item.getClaimantName().isEmpty()) {
-                            item.setStatus("Claimed");
+                        if (updates.containsKey("userRef")) {
+                            item.setUserRef((String) updates.get("userRef"));
                         }
-    
-                        // Set the updated timestamp
+                        
                         item.setUpdatedAt(Instant.now().toString());
-    
-                        // Perform the asynchronous update in Firebase using ApiFuture
-                        ApiFuture<Void> futureUpdate = dbRef.child(id).setValueAsync(item);
-    
-                        // Add a listener to handle completion or failure
-                        futureUpdate.addListener(() -> {
-                            try {
-                                futureUpdate.get(); // Ensure the operation completes successfully
-                                future.complete(item);
-                            } catch (Exception e) {
-                                future.completeExceptionally(e); // Handle the exception
-                            }
-                        }, Executors.newSingleThreadExecutor());
+                        dbRef.child(id).setValueAsync(item);
+                        future.complete(item);
                     } else {
-                        future.complete(null); // Item not found
+                        future.complete(null);
                     }
                 } else {
-                    future.complete(null); // Snapshot does not exist
+                    future.complete(null);
                 }
             }
-    
+
             @Override
             public void onCancelled(DatabaseError error) {
                 future.completeExceptionally(error.toException());
             }
         });
-    
+
         try {
             return future.get();
         } catch (Exception e) {
@@ -337,4 +322,4 @@ public class ItemServiceImpl implements ItemService {
             return null;
         }
     }
-}    
+}
