@@ -12,7 +12,7 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/**")
             .allowedOrigins("http://localhost:3000", "https://findnest-840305a6daeb.herokuapp.com/") // React frontend origin
             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
-            .allowedHeaders("Content-Type", "Authorization", "X-Requested-With")
+            .allowedHeaders("Content-Type", "Authorization")
             .allowCredentials(true);
     }
 }
