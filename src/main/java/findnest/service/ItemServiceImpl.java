@@ -35,6 +35,14 @@ public class ItemServiceImpl implements ItemService {
         item.setUpdatedAt(timestamp);
         item.setStatus("Available");
 
+        // Ensure turnover fields are set
+        if (item.getTurnoverDate() == null) {
+            item.setTurnoverDate(""); // Default empty value
+        }
+        if (item.getTurnoverPerson() == null) {
+            item.setTurnoverPerson(""); // Default empty value
+        }
+
         dbRef.child(id).setValueAsync(item);
 
         return item;
@@ -107,6 +115,15 @@ public class ItemServiceImpl implements ItemService {
                 if (snapshot.exists()) {
                     item.setId(id);
                     item.setUpdatedAt(Instant.now().toString());
+
+                    // Ensure turnover fields are set
+                    if (item.getTurnoverDate() == null) {
+                        item.setTurnoverDate(""); // Default empty value
+                    }
+                    if (item.getTurnoverPerson() == null) {
+                        item.setTurnoverPerson(""); // Default empty value
+                    }
+
                     dbRef.child(id).setValueAsync(item);
                     future.complete(item);
                 } else {
@@ -156,7 +173,7 @@ public class ItemServiceImpl implements ItemService {
         historyDbRef.child(historyId).setValueAsync(item);
     }
 
-      @Override
+    @Override
     public List<Items> getAllItemsFromHistory() {
         CompletableFuture<List<Items>> future = new CompletableFuture<>();
         historyDbRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -223,7 +240,7 @@ public class ItemServiceImpl implements ItemService {
                 itemCounts.setTotalCount(snapshot.getChildrenCount());
                 long availableCount = 0;
                 long claimedCount = 0;
-    
+
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
                     String status = childSnapshot.child("status").getValue(String.class);
                     if ("Available".equalsIgnoreCase(status)) {
@@ -232,26 +249,26 @@ public class ItemServiceImpl implements ItemService {
                         claimedCount++;
                     }
                 }
-    
+
                 itemCounts.setAvailableCount(availableCount);
                 itemCounts.setClaimedCount(claimedCount);
                 future.complete(itemCounts);
             }
-    
+
             @Override
             public void onCancelled(DatabaseError error) {
                 future.completeExceptionally(error.toException());
             }
         });
-    
+
         try {
             return future.get();
         } catch (Exception e) {
             e.printStackTrace();
-            return new Items(); 
+            return new Items();
         }
     }
-    
+
     @Override
     public Items patchItem(String id, Map<String, Object> updates) {
         CompletableFuture<Items> future = new CompletableFuture<>();
@@ -261,18 +278,27 @@ public class ItemServiceImpl implements ItemService {
                 if (snapshot.exists()) {
                     Items item = snapshot.getValue(Items.class);
                     if (item != null) {
-                        if (!"Claimed".equalsIgnoreCase(item.getStatus())) {
-                            item.setStatus("Claimed");
-                            item.setClaimedDate(Instant.now().toString());
+
+                        // Update turnover fields if present in updates
+                        if (updates.containsKey("turnoverDate")) {
+                            item.setTurnoverDate((String) updates.get("turnoverDate"));
                         }
+                        if (updates.containsKey("turnoverPerson")) {
+                            item.setTurnoverPerson((String) updates.get("turnoverPerson"));
+                        }
+
+                        // Update other fields
                         if (updates.containsKey("claimantName")) {
                             item.setClaimantName((String) updates.get("claimantName"));
+                        }
+                        if (updates.containsKey("claimantImage")) {
+                            item.setClaimantImage((String) updates.get("claimantImage"));
                         }
                         if (updates.containsKey("userRef")) {
                             item.setUserRef((String) updates.get("userRef"));
                         }
+                        
                         item.setUpdatedAt(Instant.now().toString());
-
                         dbRef.child(id).setValueAsync(item);
                         future.complete(item);
                     } else {
@@ -296,7 +322,4 @@ public class ItemServiceImpl implements ItemService {
             return null;
         }
     }
-
-
-
 }
