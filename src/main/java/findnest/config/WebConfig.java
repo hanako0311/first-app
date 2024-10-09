@@ -10,9 +10,9 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-            .allowedOrigins("https://findnest-840305a6daeb.herokuapp.com/") // React frontend origin
+            .allowedOrigins("http://localhost:3000", "https://findnest-840305a6daeb.herokuapp.com/") // React frontend origin
             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
-            .allowedHeaders("*")
+            .allowedHeaders("Content-Type", "Authorization", "X-Requested-With")
             .allowCredentials(true);
     }
 }
